@@ -47,7 +47,7 @@ class QuizSubmission(models.Model):
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='quiz_submissions')
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='submissions')
 
-    score = models.PositiveIntegerField(null=True, blank=True)
+    score = models.PositiveIntegerField(default=0)
     total_questions = models.PositiveIntegerField()
     start_time = models.DateTimeField(auto_now_add=True)
     end_time = models.DateTimeField(null=True, blank=True)
@@ -83,5 +83,3 @@ class EssayQuestionSubmission(models.Model):
 
     def __str__(self):
         return f"Essay submission for {self.question.text[:50]} by {self.submission.student.username}"
-
-

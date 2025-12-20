@@ -1,13 +1,15 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
-from django.db.models import Avg, Count, Q
+from django.db.models import Avg, Count, Q, OuterRef, Subquery, Max
+from django.db.models.functions import TruncDate
 from django.utils import timezone
 from datetime import timedelta
 import csv
 import json
 from io import BytesIO
 
+from apps.courses.models import LessonProgress
 from apps.courses.models import Course
 from apps.quiz.models import QuizSubmission
 from .models import StudentPerformanceSnapshot, CourseEngagementMetrics, StudentActivityLog
@@ -18,6 +20,7 @@ from .utils import (
     get_performance_trends,
     get_student_heatmap_data
 )
+from apps.forum.models import DiscussionPost
 
 
 @login_required
@@ -43,7 +46,6 @@ def student_performance_dashboard(request, course_id):
     
     # Lesson completion progress
     total_lessons = course.lessons.count()
-    from apps.courses.models import LessonProgress
     completed_lessons = LessonProgress.objects.filter(
         student=request.user,
         lesson__course=course,
@@ -82,23 +84,28 @@ def instructor_analytics_dashboard(request, course_id):
     
     # Get dropout risk students
     at_risk_students = []
-    fourteen_days_ago = timezone.now() - timedelta(days=14)
-    for student in course.students.all():
+    two_weeks_ago = timezone.now() - timedelta(days=14)
+
+    # Subquery to get the last activity timestamp for each student in the course
+    last_activity_subquery = StudentActivityLog.objects.filter(
+        student=OuterRef('pk'),
+        course=course
+    ).order_by('-timestamp').values('timestamp')[:1]
+
+    # Annotate students with their last activity date
+    students_with_last_activity = course.students.annotate(
+        last_activity_timestamp=Subquery(last_activity_subquery)
+    )
+
+    for student in students_with_last_activity:
         metrics = calculate_student_performance(student, course)
-        recent_activity = StudentActivityLog.objects.filter(
-            student=student,
-            course=course,
-            timestamp__gte=fourteen_days_ago
-        ).exists()
-        
-        if metrics['completion_rate'] < 20 and not recent_activity:
+        has_recent_activity = student.last_activity_timestamp and student.last_activity_timestamp >= two_weeks_ago
+
+        if metrics['completion_rate'] < 20 and not has_recent_activity:
             at_risk_students.append({
                 'student': student,
                 'metrics': metrics,
-                'last_activity': StudentActivityLog.objects.filter(
-                    student=student,
-                    course=course
-                ).order_by('-timestamp').first()
+                'last_activity': student.last_activity_timestamp
             })
     
     # Activity timeline (last 30 days)
@@ -106,8 +113,8 @@ def instructor_analytics_dashboard(request, course_id):
     activity_timeline = StudentActivityLog.objects.filter(
         course=course,
         timestamp__gte=thirty_days_ago
-    ).extra(
-        select={'day': 'date(timestamp)'}
+    ).annotate(
+        day=TruncDate('timestamp')
     ).values('day').annotate(
         count=Count('id')
     ).order_by('day')
@@ -148,20 +155,26 @@ def export_student_performance_csv(request, course_id):
         'Last Activity'
     ])
     
-    for student in course.students.all():
+    # Optimize by prefetching related data and using annotations
+    students = course.students.all().prefetch_related('user_profile')
+
+    # Annotate each student with their forum post count and last activity timestamp
+    students = students.annotate(
+        forum_post_count=Count('discussion_posts', filter=Q(discussion_posts__thread__course=course)),
+        last_activity_timestamp=Max('activity_logs__timestamp', filter=Q(activity_logs__course=course))
+    )
+
+    for student in students:
         metrics = calculate_student_performance(student, course)
-        
-        from apps.forum.models import DiscussionPost
-        forum_posts = DiscussionPost.objects.filter(
-            author=student,
-            thread__course=course
-        ).count()
-        
-        last_activity = StudentActivityLog.objects.filter(
-            student=student,
-            course=course
-        ).order_by('-timestamp').first()
-        
+
+        last_activity_str = 'Never'
+        if student.last_activity_timestamp:
+            # Ensure last_activity_timestamp is timezone-aware if your project uses timezones
+            last_activity_ts = student.last_activity_timestamp
+            if timezone.is_aware(last_activity_ts):
+                last_activity_ts = timezone.localtime(last_activity_ts)
+            last_activity_str = last_activity_ts.strftime('%Y-%m-%d %H:%M')
+
         writer.writerow([
             student.get_full_name() or '',
             student.username,
@@ -170,8 +183,8 @@ def export_student_performance_csv(request, course_id):
             metrics['assignment_average'],
             metrics['completion_rate'],
             metrics['engagement_score'],
-            forum_posts,
-            last_activity.timestamp.strftime('%Y-%m-%d %H:%M') if last_activity else 'Never'
+            student.forum_post_count,
+            last_activity_str
         ])
     
     return response
