@@ -1,6 +1,9 @@
 from django.db import models
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from apps.courses.models import Course
+
+User = get_user_model()
 
 
 class Announcement(models.Model):
@@ -45,7 +48,7 @@ class Announcement(models.Model):
     def get_recipients(self):
         """Get list of users who should receive this announcement"""
         if self.scope == 'platform':
-            return settings.AUTH_USER_MODEL.objects.all()
+            return User.objects.all()
         elif self.scope == 'course' and self.course:
             # Course students + instructor
             recipients = list(self.course.students.all())

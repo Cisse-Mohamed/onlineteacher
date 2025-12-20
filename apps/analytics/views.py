@@ -155,12 +155,9 @@ def export_student_performance_csv(request, course_id):
         'Last Activity'
     ])
     
-    # Optimize by prefetching related data and using annotations
-    students = course.students.all().prefetch_related('user_profile')
-
     # Annotate each student with their forum post count and last activity timestamp
     students = students.annotate(
-        forum_post_count=Count('discussion_posts', filter=Q(discussion_posts__thread__course=course)),
+        forum_post_count=Count('forum_posts', filter=Q(forum_posts__thread__course=course)),
         last_activity_timestamp=Max('activity_logs__timestamp', filter=Q(activity_logs__course=course))
     )
 
