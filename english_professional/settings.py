@@ -102,8 +102,8 @@ TEMPLATES = [
     },
 ]
 
-# WSGI_APPLICATION = 'english_professional.wsgi.application'
-ASGI_APPLICATION = 'english_professional.asgi.application'
+WSGI_APPLICATION = 'english_professional.wsgi.application'
+#ASGI_APPLICATION = 'english_professional.asgi.application'
 
 CHANNEL_LAYERS = {
     'default': {
