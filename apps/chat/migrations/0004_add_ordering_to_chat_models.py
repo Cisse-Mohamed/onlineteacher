@@ -11,10 +11,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterModelOptions(
-            name='messagereadreceipt',
-            options={'ordering': ['-read_at']},
-        ),
-        migrations.AlterModelOptions(
             name='messagereaction',
             options={'ordering': ['-created_at']},
         ),

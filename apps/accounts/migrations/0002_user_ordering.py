@@ -15,7 +15,3 @@ class Migration(migrations.Migration):
             options={'ordering': ['username']},
         ),
     ]
-```
-
-I will now create this file.
-```

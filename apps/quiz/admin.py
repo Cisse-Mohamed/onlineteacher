@@ -30,7 +30,7 @@ class QuestionAdmin(admin.ModelAdmin):
 
 @admin.register(QuizSubmission)
 class QuizSubmissionAdmin(admin.ModelAdmin):
-    list_display = ('student', 'quiz', 'score', 'total_questions', 'score_percentage', 'start_time', 'end_time')
+    list_display = ('student', 'quiz', 'total_score', 'total_questions', 'score_percentage', 'start_time', 'end_time')
     list_filter = ('quiz', 'start_time')
     search_fields = ('student__username', 'quiz__title')
     date_hierarchy = 'start_time'

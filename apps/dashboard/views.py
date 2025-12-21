@@ -14,9 +14,8 @@ def dashboard(request):
     user = request.user
     today = timezone.now()
 
-    # 1. Active Courses (Optimized)
     if user.is_instructor:
-        courses = Course.objects.filter(instructor=user)
+        courses = Course.objects.filter(instructors=user)
     else:
         courses = user.courses_enrolled.all()
     active_courses_count = courses.count()
@@ -25,7 +24,7 @@ def dashboard(request):
     if user.is_instructor:
         # Ungraded submissions for instructor's courses
         pending_assignments_count = Submission.objects.filter(
-            assignment__lesson__course__instructor=user,
+            assignment__lesson__course__instructors=user,
             grade__isnull=True
         ).count()
         pending_label = "Ungraded Submissions"
@@ -57,7 +56,8 @@ def dashboard(request):
     quiz_scores = []
     for q in recent_quizzes:
         if q.total_questions > 0:
-            percentage = (q.score / q.total_questions) * 100
+            # Here it was score / total_questions, now it should be total_score
+            percentage = (q.total_score / q.total_questions) * 100
             quiz_scores.append(round(percentage))
         else:
             quiz_scores.append(0)
@@ -83,7 +83,7 @@ def calendar_events_api(request):
     events = []
     
     if user.is_instructor:
-        courses = Course.objects.filter(instructor=user)
+        courses = Course.objects.filter(instructors=user)
     else:
         courses = user.courses_enrolled.all()
         

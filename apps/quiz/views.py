@@ -80,6 +80,10 @@ class QuizTakeView(LoginRequiredMixin, View):
         form = QuizTakeForm(request.POST, question_attempts=question_attempts)
         if form.is_valid():
             score = form.save(submission=submission, question_attempts=question_attempts)
+            submission.mcq_score = score
+            submission.total_score += score # Add MCQ score to total
+            submission.end_time = timezone.now() # Mark as completed
+            submission.save()
 
             # Award Points
             points_earned = score * quiz.points_per_question
@@ -131,6 +135,10 @@ class QuizEssaySubmissionsView(LoginRequiredMixin, View):
 
         if form.is_valid():
             form.save()
+            # Update the total score of the submission
+            submission = attempt.submission
+            submission.total_score += attempt.points_earned
+            submission.save()
             messages.success(request, f"Score updated for {attempt.submission.student.username}'s essay.")
         else:
             messages.error(request, "Invalid score submitted.")

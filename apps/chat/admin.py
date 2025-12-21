@@ -12,11 +12,15 @@ class ThreadAdmin(admin.ModelAdmin):
 
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
-    list_display = ('sender', 'thread', 'message_type', 'timestamp', 'is_read')
-    list_filter = ('message_type', 'is_read', 'timestamp')
+    list_display = ('sender', 'thread', 'message_type', 'timestamp', 'has_been_read')
+    list_filter = ('message_type', 'timestamp')
     search_fields = ('content', 'sender__username')
     filter_horizontal = ('mentions',)
     date_hierarchy = 'timestamp'
+
+    @admin.display(boolean=True, description="Read?")
+    def has_been_read(self, obj):
+        return obj.read_by.exists()
 
 
 @admin.register(MessageReaction)

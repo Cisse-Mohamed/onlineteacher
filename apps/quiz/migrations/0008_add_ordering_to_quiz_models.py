@@ -26,8 +26,5 @@ class Migration(migrations.Migration):
             name='quiz',
             options={'ordering': ['-created_at', 'title']},
         ),
-        migrations.AlterModelOptions(
-            name='quizquestionattempt',
-            options={'ordering': ['question__question_type', 'question__text'], 'unique_together': {('submission', 'question')}},
-        ),
+
     ]

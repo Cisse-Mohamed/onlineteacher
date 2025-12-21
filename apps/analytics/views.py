@@ -42,7 +42,7 @@ def student_performance_dashboard(request, course_id):
     recent_quizzes = QuizSubmission.objects.filter(
         student=request.user,
         quiz__lesson__course=course
-    ).order_by('-submitted_at')[:10]
+    ).order_by('-end_time')[:10]
     
     # Lesson completion progress
     total_lessons = course.lessons.count()
@@ -155,7 +155,7 @@ def export_student_performance_csv(request, course_id):
     ])
     
     # Annotate each student with their forum post count and last activity timestamp
-    students = students.annotate(
+    students = course.students.all().annotate(
         forum_post_count=Count('forum_posts', filter=Q(forum_posts__thread__course=course)),
         last_activity_timestamp=Max('activity_logs__timestamp', filter=Q(activity_logs__course=course))
     )

@@ -7,10 +7,14 @@ class LessonInline(admin.StackedInline):
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ('title', 'instructor', 'created_at')
-    list_filter = ('instructor',)
+    list_display = ('title', 'display_instructors', 'created_at')
+    list_filter = ('instructors',)
     search_fields = ('title', 'description')
     inlines = [LessonInline]
+
+    def display_instructors(self, obj):
+        return ", ".join([instructor.username for instructor in obj.instructors.all()])
+    display_instructors.short_description = "Instructors"
 
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):

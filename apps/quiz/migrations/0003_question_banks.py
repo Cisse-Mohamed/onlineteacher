@@ -3,6 +3,17 @@
 from django.db import migrations, models
 import django.db.models.deletion
 
+def create_default_question_bank(apps, schema_editor):
+    QuestionBank = apps.get_model('quiz', 'QuestionBank')
+    Course = apps.get_model('courses', 'Course')
+    
+    # Try to get or create a default Course for the QuestionBank
+    default_course = Course.objects.first()
+    if not default_course:
+        default_course = Course.objects.create(title="Default Course", description="A default course for migrations")
+
+    if not QuestionBank.objects.filter(pk=1).exists():
+        QuestionBank.objects.create(pk=1, title="Default Question Bank", course=default_course)
 
 class Migration(migrations.Migration):
 
@@ -20,6 +31,7 @@ class Migration(migrations.Migration):
                 ('course', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='question_banks', to='courses.course')),
             ],
         ),
+        migrations.RunPython(create_default_question_bank),
         migrations.RemoveField(
             model_name='quiz',
             name='lesson',

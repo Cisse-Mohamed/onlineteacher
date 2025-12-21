@@ -19,8 +19,8 @@ class CourseListView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         user = self.request.user
         if user.is_instructor:
-            return Course.objects.filter(instructor=user).select_related('instructor')
-        return user.courses_enrolled.all().select_related('instructor')
+            return Course.objects.filter(instructors=user)
+        return user.courses_enrolled.all()
 
 class CourseCreateView(LoginRequiredMixin, InstructorRequiredMixin, CreateView):
     model = Course
@@ -29,8 +29,9 @@ class CourseCreateView(LoginRequiredMixin, InstructorRequiredMixin, CreateView):
     success_url = reverse_lazy('courses:course_list')
 
     def form_valid(self, form):
-        form.instance.instructor = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        form.instance.instructors.add(self.request.user)
+        return response
 
 class CourseUpdateView(LoginRequiredMixin, InstructorRequiredMixin, UpdateView):
     model = Course
@@ -41,7 +42,7 @@ class CourseUpdateView(LoginRequiredMixin, InstructorRequiredMixin, UpdateView):
         return reverse_lazy('courses:course_detail', kwargs={'pk': self.object.pk})
     
     def get_queryset(self):
-        return super().get_queryset().filter(instructor=self.request.user)
+        return super().get_queryset().filter(instructors=self.request.user)
 
 class CourseDetailView(LoginRequiredMixin, DetailView):
     model = Course

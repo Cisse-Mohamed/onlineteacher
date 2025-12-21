@@ -15,7 +15,11 @@ def chat_thread(request, thread_id):
     active_thread = get_object_or_404(Thread, pk=thread_id, participants=request.user)
     
     # Mark unread messages from other participants as read
-    active_thread.messages.filter(is_read=False).exclude(sender=request.user).update(is_read=True)
+    unread_messages = active_thread.messages.exclude(sender=request.user).exclude(
+        read_by=request.user
+    )
+    for message in unread_messages:
+        message.read_by.add(request.user)
     
     return render(request, 'chat/chat.html', {
         'threads': threads,

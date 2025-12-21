@@ -56,7 +56,7 @@ class PeerReviewReviewCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        submission = self.get_object().submission
+        submission = self.object.submission
         return reverse('peer_review:assignment_detail', kwargs={'pk': submission.assignment.pk})
 
 class PeerReviewAssignmentCreateView(LoginRequiredMixin, CreateView):
