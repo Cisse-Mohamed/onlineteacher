@@ -49,8 +49,7 @@
                                     <h6 class="mb-1">{{ thread.title }}</h6>
                                 </a>
                                 <small class="text-muted">
-                                    Started by <strong>{{ thread.author.get_full_name|default:thread.author.username
-                                        }}</strong>
+                                    Started by <strong>{{ thread.author.get_full_name|default:thread.author.username}}</strong>
                                     on {{ thread.created_at|date:"M d, Y" }}
                                 </small>
                             </td>

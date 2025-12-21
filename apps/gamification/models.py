@@ -37,3 +37,38 @@ class UserBadge(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.badge.name}"
+
+class DailyChallenge(models.Model):
+    FREQUENCY_CHOICES = [
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('monthly', 'Monthly'),
+        ('once', 'Once'), # for challenges that can only be completed once ever
+    ]
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    points_award = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    slug = models.SlugField(unique=True, max_length=200)
+    frequency = models.CharField(max_length=10, choices=FREQUENCY_CHOICES, default='daily')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-points_award', 'name']
+
+    def __str__(self):
+        return self.name
+
+class UserDailyChallenge(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='daily_challenges_completed')
+    challenge = models.ForeignKey(DailyChallenge, on_delete=models.CASCADE, related_name='user_completions')
+    completed_date = models.DateField(auto_now_add=True) # Automatically set to today's date
+    is_completed = models.BooleanField(default=True) # Will always be true if an entry exists
+
+    class Meta:
+        # A user can only complete a daily challenge once per day
+        unique_together = ('user', 'challenge', 'completed_date')
+        ordering = ['-completed_date']
+
+    def __str__(self):
+        return f"{self.user.username} completed {self.challenge.name} on {self.completed_date}"

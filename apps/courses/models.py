@@ -77,3 +77,16 @@ class LessonProgress(models.Model):
         if self.is_completed and self.completed_at is None:
             self.completed_at = timezone.now()
         super().save(*args, **kwargs)
+
+class PlagiarismReport(models.Model):
+    submission = models.OneToOneField(Submission, on_delete=models.CASCADE, related_name='plagiarism_report')
+    score = models.DecimalField(max_digits=5, decimal_places=2, help_text="Plagiarism score (e.g., 0.00 to 100.00)")
+    report_url = models.URLField(max_length=500, blank=True, null=True, help_text="URL to the detailed plagiarism report")
+    checked_at = models.DateTimeField(auto_now_add=True)
+    is_plagiarized = models.BooleanField(default=False, help_text="Flag if the submission is considered plagiarized based on a threshold")
+
+    class Meta:
+        ordering = ['-checked_at', 'score']
+
+    def __str__(self):
+        return f"Plagiarism Report for {self.submission.assignment.title} by {self.submission.student.username}"

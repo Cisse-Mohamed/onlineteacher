@@ -5,9 +5,17 @@
     <div class="card" style="max-width: 800px; margin: 0 auto;">
         <h1>Essay Submissions for {{ quiz.title }}</h1>
 
+        <div style="margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+            <a href="{% url 'quiz_detail' quiz.pk %}"
+                style="display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text-muted); text-decoration: none; margin-bottom: 1rem;">
+                &larr; Back to Quiz
+            </a>
+            <h1>Essay Submissions for {{ quiz.title }}</h1>
+        </div>
+
         {% for submission in submissions %}
         <div class="card" style="margin-bottom: 1rem;">
-            <h3>{{ submission.question.text }}</h3>
+            <h2>{{ submission.question.text }}</h2>
             <p><strong>Student:</strong> {{ submission.submission.student.username }}</p>
             <p><strong>Answer:</strong> {{ submission.answer }}</p>
             
@@ -17,12 +25,12 @@
                 <p>{{ submission.ai_feedback }}</p>
             </div>
 
-            <form action="{% url 'quiz_essay_submissions' quiz.pk %}" method="post" style="margin-top: 1rem;">
+            <form action="{% url 'quiz_essay_submissions' quiz.pk %}" method="post" style="margin-top: 1rem; display: flex; gap: 1rem; align-items: center;">
                 {% csrf_token %}
                 <input type="hidden" name="submission_id" value="{{ submission.pk }}">
-                <label for="score">Your Score:</label>
-                <input type="number" name="score" value="{{ submission.instructor_score|default_if_none:'' }}" min="0" max="100">
-                <button type="submit" class="btn btn-primary">Save Score</button>
+                <label for="score_{{ submission.pk }}">Your Score:</label>
+                <input type="number" name="score" id="score_{{ submission.pk }}" value="{{ submission.instructor_score|default_if_none:'' }}" min="0" max="100" style="padding: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius-sm); width: 80px;">
+                <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem;">Save Score</button>
             </form>
         </div>
         {% empty %}

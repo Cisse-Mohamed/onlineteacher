@@ -85,3 +85,34 @@ class MessageReaction(models.Model):
     
     def __str__(self):
         return f"{self.user.username} reacted {self.emoji} to message {self.message.id}"
+
+class ChatbotTopic(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+    slug = models.SlugField(max_length=100, unique=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+class ChatbotQuestionAnswer(models.Model):
+    topic = models.ForeignKey(ChatbotTopic, on_delete=models.CASCADE, related_name='questions_answers')
+    question_text = models.TextField(help_text="The question a user might ask (or a representative phrase)")
+    answer_text = models.TextField(help_text="The chatbot's predefined answer")
+    keywords = models.CharField(max_length=255, blank=True, help_text="Comma-separated keywords for better matching")
+    is_active = models.BooleanField(default=True)
+    priority = models.PositiveIntegerField(default=0, help_text="Higher priority means this answer is preferred if multiple match")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['topic', '-priority', 'question_text']
+        unique_together = ('topic', 'question_text')
+
+    def __str__(self):
+        return f"{self.topic.name}: {self.question_text[:50]}"

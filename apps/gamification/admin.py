@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Badge, UserPoints, UserBadge
+from .models import Badge, UserPoints, UserBadge, DailyChallenge, UserDailyChallenge
 
 @admin.register(Badge)
 class BadgeAdmin(admin.ModelAdmin):
@@ -24,3 +24,19 @@ class UserBadgeAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'badge__name')
     ordering = ('-awarded_at',)
     readonly_fields = ('awarded_at',)
+
+@admin.register(DailyChallenge)
+class DailyChallengeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'points_award', 'frequency', 'is_active', 'created_at')
+    list_filter = ('frequency', 'is_active', 'created_at')
+    search_fields = ('name', 'description')
+    prepopulated_fields = {'slug': ('name',)}
+    ordering = ('-created_at',)
+
+@admin.register(UserDailyChallenge)
+class UserDailyChallengeAdmin(admin.ModelAdmin):
+    list_display = ('user', 'challenge', 'completed_date', 'is_completed')
+    list_filter = ('challenge', 'is_completed', 'completed_date')
+    search_fields = ('user__username', 'challenge__name')
+    ordering = ('-completed_date',)
+    readonly_fields = ('completed_date', 'is_completed')
